@@ -1,19 +1,42 @@
 <script lang="ts">
+  import { authHandler } from '../store';
+
   let email = '';
   let password = '';
   let confirmPassword = '';
   let error = false;
   let register = false;
+  let authenticating = false;
 
-  function handleAuth() {
+  async function handleAuth() {
+    error = false;
+    if (authenticating) return;
+
+    authenticating = true;
+
     if (!email || !password || (register && !confirmPassword)) {
       error = true;
+      authenticating = false;
       return;
+    }
+
+    try {
+      if (!register) {
+        await authHandler.login(email, password);
+      } else {
+        await authHandler.signup(email, password);
+      }
+    } catch (error) {
+      console.log(error);
+      error = true;
+    } finally {
+      authenticating = false;
     }
   }
 
   function handleRegister() {
     register = !register;
+    error = false;
   }
 </script>
 
@@ -37,19 +60,25 @@
         <input bind:value={confirmPassword} type="password" placeholder="Confirm Password" />
       </label>
     {/if}
-    <button type="submit">Submit</button>
+    <button on:click={handleAuth} type="submit" class="submitButton" disabled={authenticating}>
+      {#if authenticating}
+        <i class="fa-solid fa-spinner spin" />
+      {:else}
+        <p>Submit</p>
+      {/if}
+    </button>
   </form>
   <div class="options">
     <p>Or</p>
     {#if register}
       <div>
         <p>Already have and account?</p>
-        <button on:click={handleRegister} on:keydown={() => {}}>Login</button>
+        <button on:click={handleRegister}>Login</button>
       </div>
     {:else}
       <div>
         <p>Don't have an account?</p>
-        <button on:click={handleRegister} on:keydown={() => {}}>Register</button>
+        <button on:click={handleRegister}>Register</button>
       </div>
     {/if}
   </div>
@@ -109,15 +138,28 @@
     border-radius: 5px;
     cursor: pointer;
     font-size: 1rem;
+    display: grid;
+    place-items: center;
   }
 
   form button:hover {
     background: blue;
   }
 
+  form button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   h1 {
     text-align: center;
     font-size: 3rem;
+  }
+
+  .error {
+    color: coral;
+    text-align: center;
+    font-size: 0.9rem;
   }
 
   .above,
@@ -196,5 +238,18 @@
     cursor: pointer;
     padding: 0;
     font-size: 0.9rem;
+  }
+
+  .spin {
+    animation: spin 1s infinite linear;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>
