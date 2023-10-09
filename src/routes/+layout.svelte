@@ -1,6 +1,10 @@
 <script lang="ts">
+  import { dev } from '$app/environment';
   import { onMount } from 'svelte';
   import { doc, getDoc, setDoc, type DocumentData } from 'firebase/firestore';
+  import { inject } from '@vercel/analytics';
+
+  inject({ mode: dev ? 'development' : 'production' });
 
   import { auth, db } from '$lib/firebase';
   import { authStore } from '../store';
